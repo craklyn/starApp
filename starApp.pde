@@ -30,8 +30,6 @@ PGraphics starMap;
 final String user     = "starApp_reader";
 final String pass     = "starAppPassword";
 final String database = "starmap";
-final String table    = "hygdata_v3";
-
 
 void setup() {
   frameRate(30);
@@ -168,7 +166,7 @@ void connectDB() {
   }
 }
 
-String getQuery() {
+String getQuery(String table) {
     String query = "SELECT * FROM " + database + "." + table + " WHERE mag < " + maxMag + " and mag > " + minMag;
     if(showNamed > 0.001)
       query += " and proper != ' '";      
@@ -176,7 +174,7 @@ String getQuery() {
 }
 
 void updateStarMap() {
-  dbconnection.query(getQuery());
+  dbconnection.query(getQuery(showNamed > 0.001? "hygdata_v3_namedStars" : "hygdata_v3"));
 
   starMap.beginDraw();
   starMap.noStroke();
@@ -214,14 +212,6 @@ void updateStarMap() {
      
       float dist2 = sq(starX - posX) + sq(starY - posY) + sq(starZ - posZ);
 
-/*
-      if( dbconnection.getString("proper").equals("Polaris")) {
-        println("mouseRA: " + mouseRA + ", mouseDec: " + mouseDec);
-        println("posX: " + posX + ", posY: " + posY + ", posZ: " + posZ);
-        println("starPosx: " + starX + ", starPosY: " + starY + ", starPosZ: " + starZ);
-      }
-*/
-
       if(dist2 < minDist2) {
         minStarName = dbconnection.getString("proper");
         minDist2 = dist2;
@@ -230,9 +220,20 @@ void updateStarMap() {
       }      
     }
   }
-
-  starMap.text(minStarName, mapWidth * (1 - minRa / 24.) + verySmallSpace, 
-                            mapHeight * (0.5 - minDec/180.) - verySmallSpace);
+  
+  starMap.textAlign(LEFT);
+  float textY = mapHeight * (0.5 - minDec/180.) - verySmallSpace;
+  if(textY < smallSpace) {
+    textY = mapHeight * (0.5 - minDec/180.) + verySmallSpace;
+    starMap.textAlign(LEFT,TOP);
+  }
+  float textX = mapWidth * (1 - minRa / 24.) + verySmallSpace;
+  if (textX + textWidth(minStarName) + verySmallSpace > mapWidth) {
+    textX = mapWidth * (1 - minRa / 24.) - verySmallSpace;
+    starMap.textAlign(RIGHT);
+  }
+  starMap.text(minStarName, textX, textY);
+  
   starMap.endDraw();
 }
   
